@@ -14,7 +14,9 @@ module.exports = (api, options = {}) => {
       /manifest\.json$/
     ],
     swDest,
-    swSrc: 'non-existent-dummy-path'
+    importWorkboxFrom: 'disabled',
+    ...swBundle.workboxOptions,
+    swSrc: 'non-existent-dummy-path',
   }
   const buildOptions = {
     silent: swBundle.silent,
