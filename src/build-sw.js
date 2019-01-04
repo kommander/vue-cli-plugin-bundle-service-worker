@@ -1,9 +1,8 @@
-const path = require('path')
 const webpack = require('webpack')
 const merge = require('webpack-merge')
 
 
-module.exports = async ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {} }) => {
+module.exports = ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {} }) => {
   const webpackConfig = merge({
     mode: process.env.NODE_ENV,
     entry: swSrc,
@@ -14,13 +13,16 @@ module.exports = async ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {}
   }, swWebpackConfig)
 
   return new Promise((resolve, reject) => {
-    webpack(webpackConfig, (err, stats) => {
+    const compiler = webpack(webpackConfig)
+
+    compiler.run((err, stats) => {
       if (err) {
         return reject(err)
       }
 
       if (stats.hasErrors()) {
-        return reject(`Service worker build failed with errors.`)
+        stats.compilation.errors.forEach(err => console.error(err))
+        return reject(new Error(`Service worker build failed with errors.`))
       }
 
       if (!silent) {
@@ -30,7 +32,7 @@ module.exports = async ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {}
         }))
       }
 
-      resolve()
+      resolve(Array.from(stats.compilation.fileDependencies))
     })
   })
 }

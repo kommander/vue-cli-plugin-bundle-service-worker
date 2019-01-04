@@ -1,30 +1,31 @@
 const path = require('path')
+const os = require('os')
 const buildSW = require('./src/build-sw')
 const BundleServiceWorkerPlugin = require('./src/BundleServiceWorkerPlugin')
 
-module.exports = (api, { pwa, outputDir, pluginOptions: { swWebpackConfig } = {}}) => {
-  if (!pwa || !pwa.workboxOptions) {
-    throw new Error('pwa.workboxOptions is missing')
+module.exports = (api, options = {}) => {
+  const { pluginOptions: { swBundle, swWebpackConfig } } = options
+  const swSrc = api.resolve(swBundle.swSrc)
+  const swDest = swBundle.swDest
+  const targetDir =  path.join(os.tmpdir(), 'vue-cli-bundle-service-worker') //
+  const workBoxConfig = {
+    exclude: [
+      /\.map$/,
+      /manifest\.json$/
+    ],
+    swDest,
+    swSrc: 'non-existent-dummy-path'
   }
-
-  if (pwa.workboxPluginMode !== 'InjectManifest') {
-    throw new Error('Only pwa.workboxPluginMode "InjectManifest" is supported')
-  }
-
-  // defer to pwa plugin's config
-  const swSrc = api.resolve(pwa.workboxOptions.swSrc)
-
-  // default to filename of swSrc, ala workbox plugin
-  const swDest = pwa.workboxOptions.swDest || path.basename(swSrc)
-  const targetDir = api.resolve(outputDir)
-
   const buildOptions = {
+    silent: swBundle.silent,
+    context: api.service.context,
     swSrc,
     swDest,
     targetDir,
     swWebpackConfig,
+    workBoxConfig
   }
-  
+
   api.registerCommand('build:sw', {
     description: 'Builds service worker',
     usage: 'vue-cli-service build:sw',
@@ -32,36 +33,15 @@ module.exports = (api, { pwa, outputDir, pluginOptions: { swWebpackConfig } = {}
     await buildSW(Object.assign({}, args, buildOptions))
   })
 
-  api.chainWebpack(webpackConfig => {
+  api.chainWebpack(config => {
     const target = process.env.VUE_CLI_BUILD_TARGET
     if (target && target !== 'app') {
       return
     }
 
-    webpackConfig
-      .when(process.env.NODE_ENV === 'production', config => {
-        config
-          .plugin('bundle-service-worker')
-          .use(BundleServiceWorkerPlugin, [{ buildOptions }])
-          .before('workbox')
-
-        config
-          .plugin('workbox')
-          // use init instead of tap, as it seems the args are not available
-          // for tap when this is called
-          .init((Plugin, [options]) => {
-            // Inject manifest into built service worker (modify in place)
-            options.swSrc = path.resolve(targetDir, swDest)
-
-            return new Plugin(options)
-          })
-          // .tap(args => {
-          //   // Inject manifest into built service worker (modify in place)
-          //   args[0].swSrc = path.resolve(targetDir, swDest)
-
-          //   return args
-          // })
-      })
+    config
+      .plugin('bundle-service-worker')
+      .use(BundleServiceWorkerPlugin, [{ buildOptions }])
   })
 }
 
