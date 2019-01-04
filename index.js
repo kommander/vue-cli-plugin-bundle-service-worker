@@ -7,11 +7,11 @@ module.exports = (api, options = {}) => {
   const { pluginOptions: { swBundle, swWebpackConfig } } = options
   const swSrc = api.resolve(swBundle.swSrc)
   const swDest = swBundle.swDest
-  const targetDir =  path.join(os.tmpdir(), 'vue-cli-bundle-service-worker') //
+  const targetDir = path.join(os.tmpdir(), 'vue-cli-bundle-service-worker') //
   const workBoxConfig = {
     exclude: [
       /\.map$/,
-      /manifest\.json$/
+      /manifest\.json$/,
     ],
     swDest,
     importWorkboxFrom: 'disabled',
@@ -25,7 +25,7 @@ module.exports = (api, options = {}) => {
     swDest,
     targetDir,
     swWebpackConfig,
-    workBoxConfig
+    workBoxConfig,
   }
 
   api.registerCommand('build:sw', {
@@ -48,5 +48,5 @@ module.exports = (api, options = {}) => {
 }
 
 module.exports.defaultModes = {
-  'build:sw': 'production'
+  'build:sw': 'production',
 }

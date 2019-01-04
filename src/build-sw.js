@@ -1,10 +1,12 @@
 const webpack = require('webpack')
 const merge = require('webpack-merge')
 
-
 module.exports = ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {} }) => {
+  const mode = ['production', 'development', 'none'].includes(process.env.NODE_ENV)
+    ? process.env.NODE_ENV
+    : (process.env.SW_ENV || 'production')
   const webpackConfig = merge({
-    mode: process.env.NODE_ENV,
+    mode,
     entry: swSrc,
     output: {
       path: targetDir,
@@ -28,7 +30,7 @@ module.exports = ({ silent, targetDir, swSrc, swDest, swWebpackConfig = {} }) =>
       if (!silent) {
         console.log(stats.toString({
           // Add console colors
-          colors: true
+          colors: true,
         }))
       }
 
