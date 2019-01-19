@@ -26,5 +26,8 @@
   "homepage": "https://github.com/diachedelic/vue-cli-plugin-bundle-service-worker",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "webpack": "^4.28.4"
   }
 }
